@@ -1,12 +1,18 @@
 # Author: aqeelanwar
 # Created: 13 March,2020, 9:19 PM
 # Email: aqeel.anwar@gatech.edu
+# Modified by GaIB 19 Assistants
 
 from tkinter import *
 import numpy as np
+from typing import Optional
+from Bot import Bot
+from GameState import GameState
+
+from RandomBot import RandomBot
 
 size_of_board = 600
-number_of_dots = 6
+number_of_dots = 4
 symbol_size = (size_of_board / 3 - size_of_board / 8) / 2
 symbol_thickness = 50
 dot_color = '#7BC043'
@@ -19,18 +25,23 @@ dot_width = 0.25*size_of_board/number_of_dots
 edge_width = 0.1*size_of_board/number_of_dots
 distance_between_dots = size_of_board / (number_of_dots)
 
+BOT_TURN_INTERVAL_MS = 100
+LEFT_CLICK = '<Button-1>'
+
 class Dots_and_Boxes():
     # ------------------------------------------------------------------
     # Initialization functions
     # ------------------------------------------------------------------
-    def __init__(self):
+    def __init__(self, bot1: Optional[Bot] = None, bot2: Optional[Bot] = None):
         self.window = Tk()
         self.window.title('Dots_and_Boxes')
         self.canvas = Canvas(self.window, width=size_of_board, height=size_of_board)
         self.canvas.pack()
-        self.window.bind('<Button-1>', self.click)
         self.player1_starts = True
         self.refresh_board()
+
+        self.bot1 = bot1
+        self.bot2 = bot2
         self.play_again()
 
     def play_again(self):
@@ -49,6 +60,8 @@ class Dots_and_Boxes():
         self.already_marked_boxes = []
         self.display_turn_text()
 
+        self.turn()
+
     def mainloop(self):
         self.window.mainloop()
 
@@ -58,13 +71,13 @@ class Dots_and_Boxes():
     # ------------------------------------------------------------------
 
     def is_grid_occupied(self, logical_position, type):
-        r = logical_position[0]
-        c = logical_position[1]
+        x = logical_position[0]
+        y = logical_position[1]
         occupied = True
 
-        if type == 'row' and self.row_status[c][r] == 0:
+        if type == 'row' and self.row_status[y][x] == 0:
             occupied = False
-        if type == 'col' and self.col_status[c][r] == 0:
+        if type == 'col' and self.col_status[y][x] == 0:
             occupied = False
 
         return occupied
@@ -76,15 +89,15 @@ class Dots_and_Boxes():
         type = False
         logical_position = []
         if position[1] % 2 == 0 and (position[0] - 1) % 2 == 0:
-            r = int((position[0]-1)//2)
-            c = int(position[1]//2)
-            logical_position = [r, c]
+            x = int((position[0]-1)//2)
+            y = int(position[1]//2)
+            logical_position = [x, y]
             type = 'row'
             # self.row_status[c][r]=1
         elif position[0] % 2 == 0 and (position[1] - 1) % 2 == 0:
-            c = int((position[1] - 1) // 2)
-            r = int(position[0] // 2)
-            logical_position = [r, c]
+            y = int((position[1] - 1) // 2)
+            x = int(position[0] // 2)
+            logical_position = [x, y]
             type = 'col'
 
         return logical_position, type
@@ -108,31 +121,31 @@ class Dots_and_Boxes():
                 self.shade_box(box, color)
 
     def update_board(self, type, logical_position):
-        r = logical_position[0]
-        c = logical_position[1]
+        x = logical_position[0]
+        y = logical_position[1]
         val = 1
         playerModifier = 1
         if self.player1_turn:
             playerModifier = -1
             
 
-        if c < (number_of_dots-1) and r < (number_of_dots-1):
-            self.board_status[c][r] = (abs(self.board_status[c][r]) + val) * playerModifier
-            if abs(self.board_status[c][r]) == 4:
+        if y < (number_of_dots-1) and x < (number_of_dots-1):
+            self.board_status[y][x] = (abs(self.board_status[y][x]) + val) * playerModifier
+            if abs(self.board_status[y][x]) == 4:
                 self.pointScored()
 
         if type == 'row':
-            self.row_status[c][r] = 1
-            if c >= 1:
-                self.board_status[c-1][r] = (abs(self.board_status[c-1][r]) + val) * playerModifier
-                if abs(self.board_status[c-1][r]) == 4:
+            self.row_status[y][x] = 1
+            if y >= 1:
+                self.board_status[y-1][x] = (abs(self.board_status[y-1][x]) + val) * playerModifier
+                if abs(self.board_status[y-1][x]) == 4:
                     self.pointScored()
 
         elif type == 'col':
-            self.col_status[c][r] = 1
-            if r >= 1:
-                self.board_status[c][r-1] = (abs(self.board_status[c][r-1]) + val) * playerModifier
-                if abs(self.board_status[c][r-1]) == 4:
+            self.col_status[y][x] = 1
+            if x >= 1:
+                self.board_status[y][x-1] = (abs(self.board_status[y][x-1]) + val) * playerModifier
+                if abs(self.board_status[y][x-1]) == 4:
                     self.pointScored()
                 
     def is_gameover(self):
@@ -251,26 +264,48 @@ class Dots_and_Boxes():
     def click(self, event):
         if not self.reset_board:
             grid_position = [event.x, event.y]
-            logical_positon, valid_input = self.convert_grid_to_logical_position(grid_position)
-            if valid_input and not self.is_grid_occupied(logical_positon, valid_input):
-                self.update_board(valid_input, logical_positon)
-                self.make_edge(valid_input, logical_positon)
-                self.mark_box()
-                self.refresh_board()
-                self.player1_turn = (not self.player1_turn) if not self.pointsScored else self.player1_turn
-                self.pointsScored = False
-
-                if self.is_gameover():
-                    # self.canvas.delete("all")
-                    self.display_gameover()
-                else:
-                    self.display_turn_text()
+            logical_position, valid_input = self.convert_grid_to_logical_position(grid_position)
+            self.update(valid_input, logical_position)
         else:
             self.canvas.delete("all")
             self.play_again()
             self.reset_board = False
 
+    def update(self, valid_input, logical_position):
+        if valid_input and not self.is_grid_occupied(logical_position, valid_input):
+            self.window.unbind(LEFT_CLICK)
+            self.update_board(valid_input, logical_position)
+            self.make_edge(valid_input, logical_position)
+            self.mark_box()
+            self.refresh_board()
+            self.player1_turn = (not self.player1_turn) if not self.pointsScored else self.player1_turn
+            self.pointsScored = False
 
-game_instance = Dots_and_Boxes()
-game_instance.mainloop()
+            if self.is_gameover():
+                # self.canvas.delete("all")
+                self.display_gameover()
+                self.window.bind(LEFT_CLICK, self.click)
+            else:
+                self.display_turn_text()
+                self.turn()
 
+    def turn(self):
+        current_bot = self.bot1 if self.player1_turn else self.bot2
+        if current_bot is None:
+            self.window.bind(LEFT_CLICK, self.click)
+        else:
+            self.window.after(BOT_TURN_INTERVAL_MS, self.bot_turn, current_bot)
+
+    def bot_turn(self, bot: Bot):
+        action = bot.get_action(GameState(
+            self.board_status.copy(),
+            self.row_status.copy(),
+            self.col_status.copy(),
+            self.player1_turn
+        ))
+
+        self.update(action.action_type, action.position)
+
+if __name__ == "__main__":
+    game_instance = Dots_and_Boxes(None, RandomBot())
+    game_instance.mainloop()

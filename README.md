@@ -30,5 +30,6 @@ python main.py
 
 
 
-## Author
+## Authors
 [Aqeel Anwar](https://www.prism.gatech.edu/~manwar8)
+Modified by GaIB 19 Assistants.
