@@ -30,7 +30,5 @@ python main.py
 
 
 
-## Authors
-[Aqeel Anwar](https://www.prism.gatech.edu/~manwar8)
-
-Modified by GaIB 19 Assistants.
+## About
+The original author is [Aqeel Anwar](https://www.prism.gatech.edu/~manwar8), but the rules has been fixed by [Jacrac04](https://github.com/Jacrac04/Dots-and-Boxes). Modified by GaIB 19 Assistants.
