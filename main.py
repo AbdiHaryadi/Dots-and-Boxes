@@ -9,6 +9,7 @@ from typing import Optional
 from Bot import Bot
 from GameState import GameState
 
+# * Import your bot
 from RandomBot import RandomBot
 
 size_of_board = 600
@@ -307,5 +308,11 @@ class Dots_and_Boxes():
         self.update(action.action_type, action.position)
 
 if __name__ == "__main__":
+    """
+    Change game_instance initialization below to change game mode
+    PvP mode: game_instance = Dots_and_Boxes(None, None)
+    PvB mode: game_instance = Dots_and_Boxes(None, BotName()) or game_instance = Dots_and_Boxes(None, BotName())
+    BvB mode: game_instance = Dots_and_Boxes(BotName(), BotName())
+    """
     game_instance = Dots_and_Boxes(None, RandomBot())
     game_instance.mainloop()
