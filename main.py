@@ -311,7 +311,7 @@ if __name__ == "__main__":
     """
     Change game_instance initialization below to change game mode
     PvP mode: game_instance = Dots_and_Boxes(None, None)
-    PvB mode: game_instance = Dots_and_Boxes(None, BotName()) or game_instance = Dots_and_Boxes(None, BotName())
+    PvB mode: game_instance = Dots_and_Boxes(None, BotName()) or game_instance = Dots_and_Boxes(BotName(), None)
     BvB mode: game_instance = Dots_and_Boxes(BotName(), BotName())
     """
     game_instance = Dots_and_Boxes(None, RandomBot())
